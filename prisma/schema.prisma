@@ -18,25 +18,39 @@ enum Role {
   USER
 }
 
+model Token {
+  id    Int    @id @default(autoincrement())
+  token String @unique
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+}
+
 model User {
   id       Int    @id @default(autoincrement())
   username String @unique
   email    String @unique
   password String
   role     Role   @default(USER)
+
+  guesses Guess[]
+  tokens  Token[]
 }
 
 model Category {
-  id         Int         @id @default(autoincrement())
-  name       String      @unique
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
   challenges Challenge[]
 }
 
 model Song {
-  id        Int         @id @default(autoincrement())
-  spotifyId String      @unique
-  challenge Challenge[]
-  SongClip  SongClip[]
+  id        Int    @id @default(autoincrement())
+  spotifyId String @unique
+
+  challenges Challenge[]
+  clips      SongClip[]
+  guesses    Guess[]
 }
 
 model SongClip {
@@ -53,7 +67,29 @@ model SongClip {
 model Challenge {
   id         Int      @id @default(autoincrement())
   date       DateTime
+  maxGuesses Int      @default(6)
+
   categoryId Int
   category   Category @relation(fields: [categoryId], references: [id])
+
+  songId Int
+  song   Song @relation(fields: [songId], references: [id])
+
+  guesses Guess[]
+
   @@unique([categoryId, date])
+}
+
+model Guess {
+  id        Int     @id @default(autoincrement())
+  isCorrect Boolean @default(false)
+
+  submittedSongId Int
+  submittedSong   Song @relation(fields: [submittedSongId], references: [id])
+
+  challengeId Int
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id])
 }

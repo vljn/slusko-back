@@ -55,6 +55,5 @@ model Challenge {
   date       DateTime
   categoryId Int
   category   Category @relation(fields: [categoryId], references: [id])
-  songId     Int
-  song       Song     @relation(fields: [songId], references: [id])
+  @@unique([categoryId, date])
 }

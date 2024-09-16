@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 
 import { Delete, Get, Middleware } from '../lib/decorators';
-import Controller from './controller';
+import Controller from '../lib/baseController';
 import prisma from '../config/prisma';
 import { isAdmin, isAuthenticated } from '../lib/middleware/auth';
 

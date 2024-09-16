@@ -2,7 +2,7 @@ import { Request, Response, Router } from 'express';
 import bcrypt from 'bcryptjs';
 
 import { Get, Middleware, Post } from '../lib/decorators';
-import Controller from './controller';
+import Controller from '../lib/baseController';
 import prisma from '../config/prisma';
 import { generatePayloadFromUser, generateUserToken, hashToken, verifyUserToken } from '../lib/jwt';
 import { isAuthenticated } from '../lib/middleware/auth';

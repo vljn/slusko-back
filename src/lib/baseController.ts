@@ -1,5 +1,5 @@
 import { RequestHandler, Router } from 'express';
-import { MiddlewareDefinition, RouteDefinition } from '../lib/types';
+import { MiddlewareDefinition, RouteDefinition } from './types';
 
 export default class Controller {
   base: string;

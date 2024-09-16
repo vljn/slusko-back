@@ -5,12 +5,12 @@ export type HTTPMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 export interface RouteDefinition {
   path: string;
   method: HTTPMethod;
-  methodName: string | symbol;
+  methodName: string;
   middleware?: Array<RequestHandler>;
 }
 
 export interface MiddlewareDefinition {
-  methodName: string | symbol;
+  methodName: string;
   middleware: RequestHandler;
 }
 

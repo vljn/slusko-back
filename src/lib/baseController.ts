@@ -19,7 +19,7 @@ export default class Controller {
     console.log('-------------------------------------------------------------');
     console.log('registering routes for ' + (this as Object).constructor.name);
     routes.forEach((route) => {
-      const fullPath = this.base + route.path;
+      const fullPath = (this.base + route.path).replace(/\/+/g, '/');
       const method = route.method;
 
       const routeMiddlewares = middlewares.filter(

@@ -1,7 +1,7 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
 
-import { userDecoded, userPayload } from './types';
+import { UserDecoded, UserPayload } from './types';
 import { User } from '@prisma/client';
 
 export function generateToken(payload: any, options: SignOptions): Promise<string> {
@@ -26,7 +26,7 @@ export function verifyToken(token: string) {
   });
 }
 
-export async function generateUserToken(payload: userPayload, type: 'access' | 'refresh') {
+export async function generateUserToken(payload: UserPayload, type: 'access' | 'refresh') {
   if (type === 'access') {
     const token = await generateToken(payload, { expiresIn: '15min', issuer: 'slusko' });
     return token;
@@ -36,12 +36,12 @@ export async function generateUserToken(payload: userPayload, type: 'access' | '
 }
 
 export async function verifyUserToken(token: string) {
-  const decoded = (await verifyToken(token)) as userDecoded;
+  const decoded = (await verifyToken(token)) as UserDecoded;
   return decoded;
 }
 
 export function generatePayloadFromUser(user: User) {
-  return { id: user.id, username: user.username, role: user.role } as userPayload;
+  return { id: user.id, username: user.username, role: user.role } as UserPayload;
 }
 
 export function hashToken(token: string) {

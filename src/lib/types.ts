@@ -14,13 +14,13 @@ export interface MiddlewareDefinition {
   middleware: RequestHandler;
 }
 
-export interface userPayload {
+export interface UserPayload {
   id: number;
   username: string;
   role: 'ADMIN' | 'USER';
 }
 
-export interface userDecoded {
+export interface UserDecoded {
   id: number;
   username: string;
   role: 'ADMIN' | 'USER';

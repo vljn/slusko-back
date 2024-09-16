@@ -1,9 +1,9 @@
-import { userDecoded } from '../../lib/types';
+import { UserDecoded } from '../../lib/types';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: userDecoded;
+      user?: UserDecoded;
     }
   }
 }

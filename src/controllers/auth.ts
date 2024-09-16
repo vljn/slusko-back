@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import bcrypt from 'bcryptjs';
 
 import { Get, Middleware, Post } from '../lib/decorators';
@@ -10,7 +10,7 @@ import { isAuthenticated } from '../lib/middleware/auth';
 // TODO error handling
 // TODO data validation
 export default class AuthController extends Controller {
-  constructor(router: any) {
+  constructor(router: Router) {
     super('/auth', router);
   }
 

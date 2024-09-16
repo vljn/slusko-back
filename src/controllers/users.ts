@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 
 import { Delete, Get, Middleware } from '../lib/decorators';
 import Controller from './controller';
@@ -6,7 +6,7 @@ import prisma from '../config/prisma';
 import { isAdmin, isAuthenticated } from '../lib/middleware/auth';
 
 export default class UsersController extends Controller {
-  constructor(router: any) {
+  constructor(router: Router) {
     super('/users', router);
   }
 

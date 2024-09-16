@@ -1,10 +1,11 @@
+import { RequestHandler, Router } from 'express';
 import { MiddlewareDefinition, RouteDefinition } from '../lib/types';
 
 export default class Controller {
   base: string;
-  router: any;
+  router: Router;
 
-  constructor(base: string, router: any) {
+  constructor(base: string, router: Router) {
     this.base = base;
     this.router = router;
   }
@@ -27,7 +28,7 @@ export default class Controller {
       routeMiddlewares.forEach((middleware) =>
         this.router[method](fullPath, middleware.middleware)
       );
-      this.router[method](fullPath, this[route.methodName as keyof this]);
+      this.router[method](fullPath, this[route.methodName as keyof this] as RequestHandler);
 
       console.log(
         `${method.toUpperCase()} on ${fullPath}; ${

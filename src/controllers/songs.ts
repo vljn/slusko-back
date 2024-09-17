@@ -40,7 +40,7 @@ export default class SongsController extends Controller {
             fs.rmSync(file);
           }
           await prisma.songClip.create({
-            data: { fileName: clipPath, order: index, song: { connect: { id: song.id } } },
+            data: { fileName: filename + ext, order: index, song: { connect: { id: song.id } } },
           });
         })
         .run();

@@ -23,7 +23,6 @@ export default class SongsController extends Controller {
     const spotifyId = req.body.spotify_id;
     const song = await prisma.song.create({ data: { spotifyId } });
 
-    console.log(req.file);
     const file = req.file?.path as string;
     const filename = path.parse(file).name;
     const ext = path.parse(file).ext;

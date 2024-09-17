@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 import Controller from '../lib/baseController';
-import { Middleware, Post } from '../lib/decorators';
+import { Get, Middleware, Post } from '../lib/decorators';
 import { isAdmin, isAuthenticated } from '../lib/middleware/auth';
 import uploadSong from '../config/multer';
 import ffmpeg from '../config/ffmpeg';
@@ -12,6 +12,13 @@ import prisma from '../config/prisma';
 export default class SongsController extends Controller {
   constructor(router: Router) {
     super('/songs', router);
+  }
+
+  @Get('/')
+  public async getAllSongs(req: Request, res: Response) {
+    const songs = await prisma.song.findMany();
+
+    res.json({ status: 'success', songs });
   }
 
   // TODO validation
@@ -44,6 +51,6 @@ export default class SongsController extends Controller {
         })
         .run();
     });
-    res.json({ status: 'success' });
+    res.status(201).json({ status: 'success' });
   }
 }

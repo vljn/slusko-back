@@ -33,22 +33,14 @@ export function Middleware(middlewares: Array<RequestHandler>) {
   };
 }
 
-export function Get(path: string) {
-  return Route(path, 'get');
+function HttpMethod(method: HTTPMethod) {
+  return function (path: string) {
+    return Route(path, method);
+  };
 }
 
-export function Post(path: string) {
-  return Route(path, 'post');
-}
-
-export function Delete(path: string) {
-  return Route(path, 'delete');
-}
-
-export function Put(path: string) {
-  return Route(path, 'put');
-}
-
-export function Patch(path: string) {
-  return Route(path, 'patch');
-}
+export const Get = HttpMethod('get');
+export const Post = HttpMethod('post');
+export const Put = HttpMethod('put');
+export const Delete = HttpMethod('delete');
+export const Patch = HttpMethod('patch');

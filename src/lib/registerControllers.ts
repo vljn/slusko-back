@@ -13,19 +13,14 @@ export function registerControllers(
   });
 }
 
-export function registerControllersDynamic(router: Router, controllersDir: string) {
-  fs.readdir(controllersDir, { recursive: true }, (error, files) => {
-    if (error) {
-      console.error(error);
-      return;
+export function registerControllersDynamic(router: Router, controllersDir: string): void {
+  const files = fs.readdirSync(controllersDir);
+  files.forEach((file) => {
+    const required = require(path.join(controllersDir, file as string));
+    if (required.default) {
+      const controllerClass = required.default as new (router: Router) => Controller;
+      const controller = new controllerClass(router);
+      controller.connect();
     }
-    files.forEach((file) => {
-      const required = require(path.join(controllersDir, file as string));
-      if (required.default) {
-        const controllerClass = required.default;
-        const controller = new controllerClass(router);
-        controller.connect();
-      }
-    });
   });
 }

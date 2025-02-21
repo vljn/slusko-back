@@ -24,6 +24,9 @@ export default class SongsController extends Controller {
 
   // TODO validation
   // TODO errors
+  // TODO add custom clip durations
+  // TODO add custom clip count
+  // TODO add custom start time
 
   @Middleware([isAuthenticated, isAdmin, uploadSong.single('song')])
   @Post('/')

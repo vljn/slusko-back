@@ -66,7 +66,8 @@ model SongClip {
 
 model Challenge {
   id         Int      @id @default(autoincrement())
-  date       DateTime
+  startDate  DateTime
+  endDate    DateTime
   maxGuesses Int      @default(6)
 
   categoryId Int
@@ -77,7 +78,7 @@ model Challenge {
 
   guesses Guess[]
 
-  @@unique([categoryId, date])
+  @@unique([categoryId, startDate, endDate])
 }
 
 model Guess {

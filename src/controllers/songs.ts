@@ -8,6 +8,7 @@ import { isAdmin, isAuthenticated } from '../lib/middleware/auth';
 import uploadSong from '../config/multer';
 import ffmpeg from '../config/ffmpeg';
 import prisma from '../config/prisma';
+import gameRules from '../config/game';
 
 export default class SongsController extends Controller {
   constructor(router: Router) {
@@ -34,7 +35,7 @@ export default class SongsController extends Controller {
     const filename = path.parse(file).name;
     const ext = path.parse(file).ext;
 
-    const durations = [2, 4, 9, 15, 22, 30];
+    const durations = gameRules.clipDurations;
     durations.forEach((duration, index) => {
       const clipPath = path.join('songs', filename + `clip${index}` + ext);
       ffmpeg(req.file?.path)

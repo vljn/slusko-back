@@ -9,13 +9,14 @@ import { isAuthenticated } from '../lib/middleware/auth';
 
 // TODO error handling
 // TODO data validation
+// TODO logout (token revocation)
 export default class AuthController extends Controller {
   constructor(router: Router) {
     super('/auth', router);
   }
 
   @Post('/register')
-  public async regsterUser(req: Request, res: Response) {
+  public async registerUser(req: Request, res: Response) {
     const { username, email, password } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -62,7 +63,7 @@ export default class AuthController extends Controller {
     const refreshToken: string = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      res.status(400).json({ status: 'error', message: 'Refresh token not provided' });
+      return res.status(400).json({ status: 'error', message: 'Refresh token not provided' });
     }
 
     try {
@@ -71,12 +72,12 @@ export default class AuthController extends Controller {
       const hashedToken = hashToken(refreshToken);
       const match = await prisma.token.findUnique({ where: { token: hashedToken } });
       if (!match) {
-        throw new Error();
+        res.status(400).json({ status: 'error', message: 'Invalid refresh token' });
       }
 
       const user = await prisma.user.findUnique({ where: { id: decoded.id } });
       if (!user) {
-        throw new Error();
+        return res.status(400).json({ status: 'error', message: 'User not found' });
       }
 
       const newPayload = generatePayloadFromUser(user);

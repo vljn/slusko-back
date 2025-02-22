@@ -17,11 +17,16 @@ export default class CategoriesController extends Controller {
     res.json({ status: 'success', categories });
   }
 
+  // TODO validation
   @Middleware([isAuthenticated, isAdmin])
   @Post('/')
   public async createCategory(req: Request, res: Response) {
     const { name } = req.body;
-    const category = await prisma.category.create({ data: { name } });
+    let slug = req.body.slug;
+    if (!slug) {
+      slug = name.toLowerCase().replace(/ /g, '-');
+    }
+    const category = await prisma.category.create({ data: { name, slug } });
 
     res.status(201).json({ status: 'success', message: 'Category created', category });
   }

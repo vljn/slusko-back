@@ -50,7 +50,6 @@ model Song {
 
   challenges Challenge[]
   clips      SongClip[]
-  guesses    Guess[]
 }
 
 model SongClip {
@@ -85,8 +84,7 @@ model Guess {
   id        Int     @id @default(autoincrement())
   isCorrect Boolean @default(false)
 
-  submittedSongId Int
-  submittedSong   Song @relation(fields: [submittedSongId], references: [id])
+  submittedSpotifyId Int
 
   challengeId Int
   challenge   Challenge @relation(fields: [challengeId], references: [id])

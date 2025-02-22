@@ -42,6 +42,7 @@ export default class SongsController extends Controller {
     durations.forEach((duration, index) => {
       const clipPath = path.join('songs', filename + `clip${index}` + ext);
       ffmpeg(req.file?.path)
+        .audioFilters('silenceremove=1:0:-50dB') // mozda
         .setStartTime('00:00:00')
         .setDuration(duration)
         .output(clipPath)
@@ -57,4 +58,6 @@ export default class SongsController extends Controller {
     });
     res.status(201).json({ status: 'success' });
   }
+
+  // TODO delete song
 }

@@ -11,6 +11,7 @@ export default class ChallengesControllers extends Controller {
   }
 
   // TODO add filtering and searching
+  // TODO get specific challenge with it's song clips
   @Get('/')
   public async getAllChallenges(req: Request, res: Response) {
     const challenges = await prisma.challenge.findMany({

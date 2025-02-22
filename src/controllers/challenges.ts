@@ -12,10 +12,12 @@ export default class ChallengesControllers extends Controller {
 
   // TODO add filtering and searching
   // TODO get specific challenge with it's song clips
+  // TODO add admin view
   @Get('/')
   public async getAllChallenges(req: Request, res: Response) {
     const challenges = await prisma.challenge.findMany({
-      include: { category: true, song: true },
+      include: { category: true },
+      omit: { songId: true },
     });
 
     res.json({ status: 'success', challenges });
@@ -35,7 +37,7 @@ export default class ChallengesControllers extends Controller {
     dates.start = new Date(startDate);
     dates.end = dates.end
       ? new Date(dates.end)
-      : new Date(startDate.getTime() + 1000 * 60 * 60 * 24);
+      : new Date(dates.start.getTime() + 1000 * 60 * 60 * 24);
     const challenge = await prisma.challenge.create({
       data: {
         startDate: dates.start,

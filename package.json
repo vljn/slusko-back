@@ -1,6 +1,6 @@
 {
   "name": "slusko",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
@@ -10,7 +10,7 @@
   "keywords": [],
   "private": true,
   "author": "vljn",
-  "license": "ISC",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.4.1",

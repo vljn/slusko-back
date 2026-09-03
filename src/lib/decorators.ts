@@ -9,6 +9,11 @@ export function Route(path: string, method: HTTPMethod) {
     propertyKey: string,
     descriptor: TypedPropertyDescriptor<ExpressRequestHandler>
   ) {
+    if (!propertyKey || !descriptor.value) {
+      console.error(`Invalid route decorator on ${(target as any).constructor.name}`);
+      return;
+    }
+
     const routes: RouteDefinition[] = Reflect.getMetadata('routes', target.constructor) || [];
     routes.push({ method, path, methodName: propertyKey });
 
@@ -22,10 +27,21 @@ export function Middleware(middlewares: Array<RequestHandler>) {
     propertyKey: string,
     descriptor: TypedPropertyDescriptor<ExpressRequestHandler>
   ) {
+    if (!Array.isArray(middlewares) || middlewares.length === 0) {
+      console.warn(
+        `No valid middlewares provided for ${(target as any).constructor.name}.${propertyKey}`
+      );
+      return;
+    }
+
     const storedMiddlewares: MiddlewareDefinition[] =
       Reflect.getMetadata('middlewares', target.constructor) || [];
 
     middlewares.forEach((middleware) => {
+      if (typeof middleware !== 'function') {
+        console.error(`Invalid middleware type on ${propertyKey}`);
+        return;
+      }
       storedMiddlewares.push({ methodName: propertyKey, middleware });
     });
 

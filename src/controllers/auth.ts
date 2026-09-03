@@ -10,6 +10,8 @@ import { isAuthenticated } from '../lib/middleware/auth';
 // TODO error handling
 // TODO data validation
 // TODO logout (token revocation)
+// TODO refresh token invalidation
+// TODO add rate limiting
 export default class AuthController extends Controller {
   constructor(router: Router) {
     super('/auth', router);

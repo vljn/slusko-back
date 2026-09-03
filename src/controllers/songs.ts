@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 import Controller from '../lib/baseController';
-import { Get, Middleware, Post } from '../lib/decorators';
+import { Get, Middleware, Post, Delete } from '../lib/decorators';
 import { isAdmin, isAuthenticated } from '../lib/middleware/auth';
 import uploadSong from '../config/multer';
 import ffmpeg from '../config/ffmpeg';
@@ -20,6 +20,20 @@ export default class SongsController extends Controller {
     const songs = await prisma.song.findMany();
 
     res.json({ status: 'success', songs });
+  }
+
+  @Get('/:id')
+  public async getSongById(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+    const song = await prisma.song.findUnique({
+      where: { id },
+      include: { clips: true },
+    });
+    if (!song) {
+      return res.status(404).json({ status: 'error', message: 'Song not found' });
+    }
+
+    res.json({ status: 'success', song });
   }
 
   // TODO validation
@@ -60,8 +74,29 @@ export default class SongsController extends Controller {
         })
         .run();
     });
-    res.status(201).json({ status: 'success' });
+    res.status(201).json({ status: 'success', song: { id: song.id, spotifyId } });
   }
 
   // TODO delete song
+  @Middleware([isAuthenticated, isAdmin])
+  @Delete('/:id')
+  public async deleteSong(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+    const song = await prisma.song.findUnique({ where: { id } });
+    if (!song) {
+      return res.status(404).json({ status: 'error', message: 'Song not found' });
+    }
+
+    const clips = await prisma.songClip.findMany({ where: { songId: id } });
+    clips.forEach((clip) => {
+      const clipPath = path.join('songs', clip.fileName);
+      if (fs.existsSync(clipPath)) {
+        fs.unlinkSync(clipPath);
+      }
+    });
+
+    await prisma.song.delete({ where: { id } });
+
+    res.json({ status: 'success', message: 'Song deleted successfully' });
+  }
 }

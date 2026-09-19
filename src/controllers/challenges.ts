@@ -49,8 +49,20 @@ export default class ChallengesControllers extends Controller {
   @Get('/:id')
   public async getChallenge(req: Request, res: Response) {
     const { id } = req.params;
+    const challengeId = parseInt(id, 10);
+    if (isNaN(challengeId)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid challenge ID' });
+    }
+
+    const guessCount = await prisma.guess.count({
+      where: {
+        challengeId,
+        userId: req.user?.id,
+      },
+    });
+
     const challenge = await prisma.challenge.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: challengeId },
       include: {
         category: true,
         song: {
@@ -59,8 +71,11 @@ export default class ChallengesControllers extends Controller {
             clips: {
               where: {
                 order: {
-                  equals: 1 + (await prisma.guess.count({ where: { userId: req.user?.id } })),
+                  lte: 1 + guessCount,
                 },
+              },
+              orderBy: {
+                order: 'asc',
               },
               omit: {
                 songId: true,

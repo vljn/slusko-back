@@ -15,8 +15,13 @@ export default class GuessesController extends Controller {
   public async makeGuess(req: Request, res: Response) {
     const { challenge_id: challengeId, spotify_id: spotifyId } = req.body;
 
+    const parsedChallengeId = parseInt(challengeId, 10);
+    if (isNaN(parsedChallengeId)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid challenge ID' });
+    }
+
     const challenge = await prisma.challenge.findUnique({
-      where: { id: parseInt(challengeId) },
+      where: { id: parsedChallengeId },
       include: { song: true },
     });
     if (!challenge) {
@@ -29,7 +34,12 @@ export default class GuessesController extends Controller {
       return res.status(400).json({ status: 'error', message: 'Challenge has ended' });
     }
 
-    const madeGuesses = await prisma.guess.findMany({ where: { userId: req.user?.id } });
+    const madeGuesses = await prisma.guess.findMany({
+      where: {
+        userId: req.user?.id,
+        challengeId: parsedChallengeId,
+      },
+    });
     if (madeGuesses.length >= challenge.maxGuesses) {
       return res
         .status(400)
@@ -48,7 +58,7 @@ export default class GuessesController extends Controller {
     const isCorrect = challenge.song.spotifyId === spotifyId;
     const guess = await prisma.guess.create({
       data: {
-        challenge: { connect: { id: parseInt(challengeId) } },
+        challenge: { connect: { id: parsedChallengeId } },
         submittedSpotifyId: spotifyId,
         user: { connect: { id: req.user?.id } },
         isCorrect,

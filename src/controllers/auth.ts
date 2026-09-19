@@ -74,7 +74,7 @@ export default class AuthController extends Controller {
       const hashedToken = hashToken(refreshToken);
       const match = await prisma.token.findUnique({ where: { token: hashedToken } });
       if (!match) {
-        res.status(400).json({ status: 'error', message: 'Invalid refresh token' });
+        return res.status(400).json({ status: 'error', message: 'Invalid refresh token' });
       }
 
       const user = await prisma.user.findUnique({ where: { id: decoded.id } });
@@ -87,7 +87,10 @@ export default class AuthController extends Controller {
       const newRefreshToken = await generateUserToken(newPayload, 'refresh');
 
       const hashedNew = hashToken(newRefreshToken);
-      await prisma.token.create({ data: { token: hashedNew, user: { connect: { id: user.id } } } });
+      await prisma.token.update({
+        where: { token: hashedToken },
+        data: { token: hashedNew },
+      });
 
       res.cookie('refreshToken', newRefreshToken, {
         httpOnly: true,

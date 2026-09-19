@@ -7,7 +7,7 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
   }
   const split = (req.headers.authorization as string).split(' ');
   if (split.length !== 2 || split[0] !== 'Bearer') {
-    res.status(401).json({
+    return res.status(401).json({
       status: 'error',
       message: 'Authorization header invalid (should be Authorization: Bearer <access_token>)',
     });

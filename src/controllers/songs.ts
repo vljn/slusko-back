@@ -24,7 +24,11 @@ export default class SongsController extends Controller {
 
   @Get('/:id')
   public async getSongById(req: Request, res: Response) {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid song ID' });
+    }
+
     const song = await prisma.song.findUnique({
       where: { id },
       include: { clips: true },
@@ -37,7 +41,6 @@ export default class SongsController extends Controller {
   }
 
   // TODO validation
-  // TODO errors
   // TODO add custom clip durations
   // TODO add custom clip count
   // TODO add custom start time
@@ -46,42 +49,91 @@ export default class SongsController extends Controller {
   @Post('/')
   public async uploadSong(req: Request, res: Response) {
     const spotifyId = req.body.spotify_id;
-    const song = await prisma.song.create({ data: { spotifyId } });
+    if (!spotifyId) {
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({ status: 'error', message: 'spotify_id is required' });
+    }
 
-    const file = req.file?.path as string;
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No audio file uploaded' });
+    }
+
+    const file = req.file.path;
     const filename = path.parse(file).name;
     const ext = path.parse(file).ext;
-
     const durations = gameRules.clipDurations;
-    durations.forEach((duration, index) => {
-      const clipPath = path.join('songs', filename + `clip${index + 1}` + ext);
-      ffmpeg(req.file?.path)
-        .audioFilters('silenceremove=1:0:-50dB') // mozda
-        .setStartTime('00:00:00')
-        .setDuration(duration)
-        .output(clipPath)
-        .on('end', async () => {
-          if (index === durations.length - 1) {
-            fs.rmSync(file);
-          }
-          await prisma.songClip.create({
-            data: {
-              fileName: filename + ext,
-              order: index + 1,
-              song: { connect: { id: song.id } },
-            },
-          });
-        })
-        .run();
-    });
-    res.status(201).json({ status: 'success', song: { id: song.id, spotifyId } });
+
+    const existingSong = await prisma.song.findUnique({ where: { spotifyId } });
+    if (existingSong) {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+      }
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'Song with this spotify_id already exists' });
+    }
+
+    const createdClipPaths: string[] = [];
+
+    try {
+      const slicePromises = durations.map((duration, index) => {
+        const clipFileName = `${filename}clip${index + 1}${ext}`;
+        const clipPath = path.resolve(__dirname, '../../clips', clipFileName);
+        createdClipPaths.push(clipPath);
+
+        return new Promise<{ fileName: string; order: number }>((resolve, reject) => {
+          ffmpeg(file)
+            .audioFilters('silenceremove=1:0:-50dB')
+            .setStartTime('00:00:00')
+            .setDuration(duration)
+            .output(clipPath)
+            .on('end', () => resolve({ fileName: clipFileName, order: index + 1 }))
+            .on('error', (err) => reject(err))
+            .run();
+        });
+      });
+
+      const clipsData = await Promise.all(slicePromises);
+
+      const song = await prisma.song.create({
+        data: {
+          spotifyId,
+          clips: {
+            create: clipsData,
+          },
+        },
+        include: { clips: true },
+      });
+
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+      }
+
+      res.status(201).json({ status: 'success', song });
+    } catch (error) {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+      }
+      createdClipPaths.forEach((clipPath) => {
+        if (fs.existsSync(clipPath)) {
+          fs.unlinkSync(clipPath);
+        }
+      });
+      console.error('Error processing audio upload:', error);
+      res.status(500).json({ status: 'error', message: 'Failed to process audio clips' });
+    }
   }
 
-  // TODO delete song
   @Middleware([isAuthenticated, isAdmin])
   @Delete('/:id')
   public async deleteSong(req: Request, res: Response) {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid song ID' });
+    }
+
     const song = await prisma.song.findUnique({ where: { id } });
     if (!song) {
       return res.status(404).json({ status: 'error', message: 'Song not found' });
@@ -89,12 +141,13 @@ export default class SongsController extends Controller {
 
     const clips = await prisma.songClip.findMany({ where: { songId: id } });
     clips.forEach((clip) => {
-      const clipPath = path.join('songs', clip.fileName);
+      const clipPath = path.resolve(__dirname, '../../clips', clip.fileName);
       if (fs.existsSync(clipPath)) {
         fs.unlinkSync(clipPath);
       }
     });
 
+    await prisma.songClip.deleteMany({ where: { songId: id } });
     await prisma.song.delete({ where: { id } });
 
     res.json({ status: 'success', message: 'Song deleted successfully' });

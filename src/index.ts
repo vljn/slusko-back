@@ -13,6 +13,7 @@ const app = express();
 
 app.use(cookieParser());
 app.use(express.json());
+app.use('/clips', express.static(path.resolve(__dirname, '../clips')));
 
 registerControllersDynamic(app, path.join(__dirname, 'controllers'));
 

@@ -43,10 +43,12 @@ export default class Controller {
           return;
         }
 
-        routeMiddlewares.forEach((middleware) => {
-          (this.router[method] as any)(fullPath, middleware.middleware);
-        });
-        (this.router[method] as any)(fullPath, handler.bind(this) as RequestHandler);
+        const asyncWrappedHandler: RequestHandler = (req, res, next) => {
+          Promise.resolve((handler as Function).call(this, req, res, next)).catch(next);
+        };
+
+        const middlewareFns = routeMiddlewares.map((m) => m.middleware);
+        (this.router[method] as any)(fullPath, ...middlewareFns, asyncWrappedHandler);
 
         const middlewareInfo =
           routeMiddlewares.length > 0

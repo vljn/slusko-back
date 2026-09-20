@@ -9,8 +9,6 @@ import { isAuthenticated } from '../lib/middleware/auth';
 
 // TODO error handling
 // TODO data validation
-// TODO logout (token revocation)
-// TODO refresh token invalidation
 // TODO add rate limiting
 export default class AuthController extends Controller {
   constructor(router: Router) {
@@ -105,6 +103,24 @@ export default class AuthController extends Controller {
         .status(400)
         .json({ status: 'error', message: 'Error while validating refresh token, login again' });
     }
+  }
+
+  @Post('/logout')
+  public async logout(req: Request, res: Response) {
+    const refreshToken: string | undefined = req.cookies.refreshToken;
+
+    if (refreshToken) {
+      const hashedToken = hashToken(refreshToken);
+      await prisma.token.deleteMany({ where: { token: hashedToken } });
+    }
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+    });
+
+    res.json({ status: 'success', message: 'Logged out successfully' });
   }
 
   @Get('/me')

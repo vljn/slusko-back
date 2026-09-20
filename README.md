@@ -153,9 +153,9 @@ npm run dev
 ## TODO
 
 - [ ] Error handling & validation (WIP)
-- [ ] Logout endpoint & token revocation
+- [x] Logout endpoint & token revocation
 - [ ] Daily challenge rotation
-- [ ] FFmpeg audio clip generation
+- [x] FFmpeg audio clip generation
 - [ ] Spotify API integration
 - [ ] Leaderboard & statistics
 - [ ] Email verification

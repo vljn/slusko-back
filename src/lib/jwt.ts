@@ -6,7 +6,12 @@ import { User } from '@prisma/client';
 
 export function generateToken(payload: any, options: SignOptions): Promise<string> {
   return new Promise((resolve, reject) => {
-    jwt.sign(payload, process.env.JWT_SECRET as string, options, (error, token) => {
+    const secret: string | undefined = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET environment variable is missing!");
+    }
+
+    jwt.sign(payload, secret, options, (error, token) => {
       if (error) {
         return reject(error);
       }
@@ -17,7 +22,12 @@ export function generateToken(payload: any, options: SignOptions): Promise<strin
 
 export function verifyToken(token: string) {
   return new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.JWT_SECRET as string, (error, decoded) => {
+    const secret: string | undefined = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET environment variable is missing!");
+    }
+    
+    jwt.verify(token, secret, (error, decoded) => {
       if (error) {
         return reject(error);
       }

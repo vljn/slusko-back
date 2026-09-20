@@ -28,10 +28,12 @@ export function verifyToken(token: string) {
 
 export async function generateUserToken(payload: UserPayload, type: 'access' | 'refresh') {
   if (type === 'access') {
-    const token = await generateToken(payload, { expiresIn: '15min', issuer: 'slusko' });
+    const expiresIn = (process.env.JWT_ACCESS_EXPIRY || '5m') as any;
+    const token = await generateToken(payload, { expiresIn, issuer: 'slusko' });
     return token;
   }
-  const token = await generateToken(payload, { expiresIn: '7d', issuer: 'slusko' });
+  const expiresIn = (process.env.JWT_REFRESH_EXPIRY || '7d') as any;
+  const token = await generateToken(payload, { expiresIn, issuer: 'slusko' });
   return token;
 }
 

@@ -66,8 +66,7 @@ export default class ChallengesControllers extends Controller {
       include: {
         category: true,
         song: {
-          omit: { spotifyId: true, id: true },
-          include: {
+          select: {
             clips: {
               where: {
                 order: {

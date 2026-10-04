@@ -3,6 +3,8 @@ import { Request, Response, Router } from 'express';
 import Controller from '../lib/baseController';
 import { Get, Middleware, Post } from '../lib/decorators';
 import { isAdmin, isAuthenticated } from '../lib/middleware/auth';
+import { validateBody } from '../lib/middleware/validate';
+import { createChallengeSchema } from '../schemas';
 import prisma from '../config/prisma';
 
 export default class ChallengesControllers extends Controller {
@@ -94,8 +96,7 @@ export default class ChallengesControllers extends Controller {
     res.json({ status: 'success', challenge });
   }
 
-  // TODO validation (check for song and category existence)
-  @Middleware([isAuthenticated, isAdmin])
+  @Middleware([isAuthenticated, isAdmin, validateBody(createChallengeSchema)])
   @Post('/')
   public async createChallenge(req: Request, res: Response) {
     const {
@@ -105,18 +106,37 @@ export default class ChallengesControllers extends Controller {
       category_id: categoryId,
       song_id: songId,
     } = req.body;
-    const dates = { start: startDate, end: endDate };
-    dates.start = new Date(startDate);
-    dates.end = dates.end
-      ? new Date(dates.end)
-      : new Date(dates.start.getTime() + 1000 * 60 * 60 * 24);
+
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : new Date(start.getTime() + 1000 * 60 * 60 * 24);
+
+    if (end <= start) {
+      return res.status(400).json({ status: 'error', message: 'End date must be after start date' });
+    }
+
+    const [category, song] = await Promise.all([
+      prisma.category.findUnique({ where: { id: categoryId } }),
+      prisma.song.findUnique({ where: { id: songId } }),
+    ]);
+
+    if (!category) {
+      return res.status(404).json({ status: 'error', message: 'Category not found' });
+    }
+
+    if (!song) {
+      return res.status(404).json({ status: 'error', message: 'Song not found' });
+    }
+
     const challenge = await prisma.challenge.create({
       data: {
-        startDate: dates.start,
-        endDate: dates.end,
-        maxGuesses,
-        category: { connect: { id: parseInt(categoryId) } },
-        song: { connect: { id: parseInt(songId) } },
+        startDate: start,
+        endDate: end,
+        maxGuesses: maxGuesses ?? 6,
+        category: { connect: { id: categoryId } },
+        song: { connect: { id: songId } },
+      },
+      include: {
+        category: true,
       },
     });
 

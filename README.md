@@ -152,7 +152,7 @@ npm run dev
 
 ## TODO
 
-- [ ] Error handling & validation (WIP)
+- [x] Error handling & validation
 - [x] Logout endpoint & token revocation
 - [ ] Daily challenge rotation
 - [x] FFmpeg audio clip generation

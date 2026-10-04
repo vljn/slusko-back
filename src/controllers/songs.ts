@@ -5,6 +5,8 @@ import fs from 'fs';
 import Controller from '../lib/baseController';
 import { Get, Middleware, Post, Delete } from '../lib/decorators';
 import { isAdmin, isAuthenticated } from '../lib/middleware/auth';
+import { validateBody } from '../lib/middleware/validate';
+import { uploadSongSchema } from '../schemas';
 import uploadSong from '../config/multer';
 import ffmpeg from '../config/ffmpeg';
 import prisma from '../config/prisma';
@@ -40,21 +42,14 @@ export default class SongsController extends Controller {
     res.json({ status: 'success', song });
   }
 
-  // TODO validation
   // TODO add custom clip durations
   // TODO add custom clip count
   // TODO add custom start time
 
-  @Middleware([isAuthenticated, isAdmin, uploadSong.single('song')])
+  @Middleware([isAuthenticated, isAdmin, uploadSong.single('song'), validateBody(uploadSongSchema)])
   @Post('/')
   public async uploadSong(req: Request, res: Response) {
     const spotifyId = req.body.spotify_id;
-    if (!spotifyId) {
-      if (req.file?.path && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-      return res.status(400).json({ status: 'error', message: 'spotify_id is required' });
-    }
 
     if (!req.file) {
       return res.status(400).json({ status: 'error', message: 'No audio file uploaded' });

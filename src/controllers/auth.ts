@@ -6,18 +6,31 @@ import Controller from '../lib/baseController';
 import prisma from '../config/prisma';
 import { generatePayloadFromUser, generateUserToken, hashToken, verifyUserToken } from '../lib/jwt';
 import { isAuthenticated } from '../lib/middleware/auth';
+import { validateBody } from '../lib/middleware/validate';
+import { loginSchema, registerSchema } from '../schemas';
 
 // TODO error handling
-// TODO data validation
 // TODO add rate limiting
 export default class AuthController extends Controller {
   constructor(router: Router) {
     super('/auth', router);
   }
 
+  @Middleware([validateBody(registerSchema)])
   @Post('/register')
   public async registerUser(req: Request, res: Response) {
     const { username, email, password } = req.body;
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ username }, { email }],
+      },
+    });
+
+    if (existingUser) {
+      const field = existingUser.username === username ? 'Username' : 'Email';
+      return res.status(409).json({ status: 'error', message: `${field} is already taken` });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
@@ -28,6 +41,7 @@ export default class AuthController extends Controller {
     res.status(201).json({ status: 'success', user });
   }
 
+  @Middleware([validateBody(loginSchema)])
   @Post('/login')
   public async loginUser(req: Request, res: Response) {
     const { username, password } = req.body;

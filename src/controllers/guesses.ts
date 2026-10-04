@@ -3,6 +3,8 @@ import { Request, Response, Router } from 'express';
 import Controller from '../lib/baseController';
 import { Get, Middleware, Post } from '../lib/decorators';
 import { isAuthenticated } from '../lib/middleware/auth';
+import { validateBody } from '../lib/middleware/validate';
+import { makeGuessSchema } from '../schemas';
 import prisma from '../config/prisma';
 
 export default class GuessesController extends Controller {
@@ -10,18 +12,13 @@ export default class GuessesController extends Controller {
     super('/guesses', router);
   }
 
-  @Middleware([isAuthenticated])
+  @Middleware([isAuthenticated, validateBody(makeGuessSchema)])
   @Post('/')
   public async makeGuess(req: Request, res: Response) {
     const { challenge_id: challengeId, spotify_id: spotifyId } = req.body;
 
-    const parsedChallengeId = parseInt(challengeId, 10);
-    if (isNaN(parsedChallengeId)) {
-      return res.status(400).json({ status: 'error', message: 'Invalid challenge ID' });
-    }
-
     const challenge = await prisma.challenge.findUnique({
-      where: { id: parsedChallengeId },
+      where: { id: challengeId },
       include: { song: true },
     });
     if (!challenge) {
@@ -37,7 +34,7 @@ export default class GuessesController extends Controller {
     const madeGuesses = await prisma.guess.findMany({
       where: {
         userId: req.user?.id,
-        challengeId: parsedChallengeId,
+        challengeId,
       },
     });
     if (madeGuesses.length >= challenge.maxGuesses) {
@@ -58,7 +55,7 @@ export default class GuessesController extends Controller {
     const isCorrect = challenge.song.spotifyId === spotifyId;
     const guess = await prisma.guess.create({
       data: {
-        challenge: { connect: { id: parsedChallengeId } },
+        challenge: { connect: { id: challengeId } },
         submittedSpotifyId: spotifyId,
         user: { connect: { id: req.user?.id } },
         isCorrect,

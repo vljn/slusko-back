@@ -64,4 +64,25 @@ export default class GuessesController extends Controller {
 
     res.status(201).json({ status: 'success', guesses: [...madeGuesses, guess] });
   }
+
+  @Middleware([isAuthenticated])
+  @Get('/:challengeId')
+  public async getGuessesForChallenge(req: Request, res: Response) {
+    const challengeId = parseInt(req.params.challengeId, 10);
+    if (isNaN(challengeId)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid challenge ID' });
+    }
+
+    const guesses = await prisma.guess.findMany({
+      where: {
+        challengeId,
+        userId: req.user?.id,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    res.json({ status: 'success', guesses });
+  }
 }

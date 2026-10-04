@@ -42,14 +42,19 @@ export default class SongsController extends Controller {
     res.json({ status: 'success', song });
   }
 
-  // TODO add custom clip durations
-  // TODO add custom clip count
-  // TODO add custom start time
-
   @Middleware([isAuthenticated, isAdmin, uploadSong.single('song'), validateBody(uploadSongSchema)])
   @Post('/')
   public async uploadSong(req: Request, res: Response) {
-    const spotifyId = req.body.spotify_id;
+    const {
+      spotify_id: spotifyId,
+      title,
+      artist,
+      album,
+      album_art: albumArt,
+      start_time: startTime = '00:00:00',
+      clip_durations: customDurations,
+      clip_count: customCount,
+    } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ status: 'error', message: 'No audio file uploaded' });
@@ -58,7 +63,11 @@ export default class SongsController extends Controller {
     const file = req.file.path;
     const filename = path.parse(file).name;
     const ext = path.parse(file).ext;
-    const durations = gameRules.clipDurations;
+
+    let durations: number[] = customDurations ?? gameRules.clipDurations;
+    if (customCount && !customDurations) {
+      durations = gameRules.clipDurations.slice(0, customCount);
+    }
 
     const existingSong = await prisma.song.findUnique({ where: { spotifyId } });
     if (existingSong) {
@@ -73,7 +82,7 @@ export default class SongsController extends Controller {
     const createdClipPaths: string[] = [];
 
     try {
-      const slicePromises = durations.map((duration, index) => {
+      const slicePromises = durations.map((duration: number, index: number) => {
         const clipFileName = `${filename}clip${index + 1}${ext}`;
         const clipPath = path.resolve(__dirname, '../../clips', clipFileName);
         createdClipPaths.push(clipPath);
@@ -81,7 +90,7 @@ export default class SongsController extends Controller {
         return new Promise<{ fileName: string; order: number }>((resolve, reject) => {
           ffmpeg(file)
             .audioFilters('silenceremove=1:0:-50dB')
-            .setStartTime('00:00:00')
+            .setStartTime(startTime)
             .setDuration(duration)
             .output(clipPath)
             .on('end', () => resolve({ fileName: clipFileName, order: index + 1 }))
@@ -95,6 +104,10 @@ export default class SongsController extends Controller {
       const song = await prisma.song.create({
         data: {
           spotifyId,
+          title,
+          artist,
+          album,
+          albumArt,
           clips: {
             create: clipsData,
           },

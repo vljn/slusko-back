@@ -31,6 +31,28 @@ export const makeGuessSchema = z.object({
 
 export const uploadSongSchema = z.object({
   spotify_id: z.string().trim().min(1, 'spotify_id is required'),
+  title: z.string().trim().optional(),
+  artist: z.string().trim().optional(),
+  album: z.string().trim().optional(),
+  album_art: z.string().trim().url('album_art must be a valid URL').optional(),
+  start_time: z
+    .union([z.string(), z.number()])
+    .optional()
+    .default('00:00:00'),
+  clip_durations: z
+    .preprocess((val) => {
+      if (typeof val === 'string') {
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) return parsed.map(Number);
+        } catch {
+          return val.split(',').map((s) => Number(s.trim()));
+        }
+      }
+      return val;
+    }, z.array(z.number().positive()))
+    .optional(),
+  clip_count: z.coerce.number().int().min(1).max(10).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

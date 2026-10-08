@@ -10,6 +10,7 @@ export default class UsersController extends Controller {
     super('/users', router);
   }
 
+  @Middleware([isAuthenticated, isAdmin])
   @Get('/')
   public async getAllUsers(req: Request, res: Response) {
     const users = await prisma.user.findMany({ select: { id: true, username: true, email: true } });
